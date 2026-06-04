@@ -63,6 +63,7 @@ export function buildSearchQuery(filters, signal) {
     .from('pets')
     .select(SELECT_COLUMNS)
     .eq('estado_adopcion', 'disponible')
+    .eq('moderation_status', 'approved')
 
   if (signal) {
     query = query.abortSignal(signal)

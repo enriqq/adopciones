@@ -42,6 +42,36 @@ En el **SQL Editor** del dashboard, ejecuta en orden:
 20. `supabase/migrations/020_search_alerts_notifications_rls.sql` — RLS alertas/notificaciones, guard de inmutabilidad en `notifications`
 21. `supabase/migrations/021_messages.sql` — tabla `messages`, migración desde `adoption_messages`, Realtime
 22. `supabase/migrations/022_messages_rls.sql` — RLS chat (remitente INSERT; participantes SELECT)
+23. `supabase/migrations/024_admin_moderation_schema.sql` — `profiles`, `system_role`, `pets.moderation_status`, logs
+24. `supabase/migrations/025_admin_moderation_rls.sql` — RLS admin global; catálogo solo mascotas `approved`
+25. `supabase/migrations/026_admin_moderation_catalog_helpers.sql` — helpers catálogo, alertas y alias `is_platform_admin`
+26. `supabase/migrations/027_fix_admin_role_bootstrap.sql` — arreglo promoción a `admin` desde SQL Editor
+
+### Administrador de plataforma (FEAT-009)
+
+1. Aplica las migraciones hasta **`027_fix_admin_role_bootstrap.sql`** (incluye el arreglo del trigger que bloqueaba el primer admin).
+2. Crea el usuario en **Authentication → Users** y copia su **UUID**.
+3. En **SQL Editor** (no uses Table Editor para cambiar el rol), ejecuta **una** de estas opciones:
+
+```sql
+-- Recomendado: crea perfil si falta y asigna admin
+select public.bootstrap_platform_admin('00000000-0000-0000-0000-000000000000'::uuid);
+
+-- Alternativa (tras migración 027):
+update public.profiles
+set system_role = 'admin'
+where id = '00000000-0000-0000-0000-000000000000'::uuid;
+```
+
+4. Comprueba:
+
+```sql
+select id, display_name, system_role from public.profiles where system_role = 'admin';
+```
+
+5. Cierra sesión en la app y vuelve a entrar con ese usuario; abre **`/admin`**.
+
+> **Importante:** No puedes volverte admin desde la app ni editando `profiles` en Table Editor con tu sesión normal: RLS y el trigger lo impiden. Un admin ya existente puede promover a otros solo vía SQL Editor o si tú añades una UI interna futura.
 
 ### Usuario refugio de prueba
 
@@ -101,6 +131,13 @@ src/
   components/messaging/ApplicationChat.jsx
   hooks/useChat.js
   services/messageService.js
+  services/profileService.js
+  services/adminModerationService.js
+  hooks/useProfile.js
+  hooks/useAdminModeration.js
+  routes/AppRoutes.jsx
+  pages/admin/AdminDashboard.jsx
+  components/auth/RequireAdmin.jsx
   components/auth/ApplicantAuthPanel.jsx
 specs/archive/feat-004-solicitud-adopcion.md
 specs/features/feat-005-gestion-solicitudes-refugio.md
@@ -118,5 +155,6 @@ specs/archive/feat-007-notificaciones-busqueda.md
 - FEAT-005 activa: `specs/features/feat-005-gestion-solicitudes-refugio.md`
 - FEAT-006 archivada: `specs/archive/feat-006-favoritos-adoptante.md`
 - FEAT-007 archivada: `specs/archive/feat-007-notificaciones-busqueda.md`
-- FEAT-008 activa: `specs/features/feat-008-mensajeria-refugio-adoptante.md`
+- FEAT-008 archivada: `specs/archive/feat-008-mensajeria-refugio-adoptante.md`
+- FEAT-009 propuesta: `specs/features/feat-009-moderacion-admin.md` (`profiles.system_role`, panel `/admin`, RLS admin)
 - Flujo OpenSpec: `.cursor/custom-commands.json`

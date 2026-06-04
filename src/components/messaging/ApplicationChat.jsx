@@ -86,7 +86,7 @@ export default function ApplicationChat({
 
         {!isLoading && messages.length === 0 && (
           <p className="text-sm text-gray-500 text-center py-6 px-2">
-            Aún no hay mensajes. Escribe para coordinar con el refugio o el adoptante.
+            Aún no hay mensajes. Escribe para coordinar con el refugio/adoptante.
           </p>
         )}
 
@@ -99,15 +99,19 @@ export default function ApplicationChat({
                 className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}
               >
                 <div
-                  className={
-                    isOwn
-                      ? 'max-w-[85%] rounded-2xl rounded-br-md px-3 py-2 text-sm bg-secondary text-white shadow-sm'
-                      : 'max-w-[85%] rounded-2xl rounded-bl-md px-3 py-2 text-sm bg-gray-100 text-gray-800'
-                  }
+                  className={`flex w-full ${isOwn ? 'justify-end' : 'justify-start'}`}
                 >
-                  {msg.content}
+                  <div
+                    className={
+                      isOwn
+                        ? 'max-w-[85%] ml-auto rounded-2xl rounded-br-md px-3 py-2 text-sm bg-secondary text-white'
+                        : 'max-w-[85%] mr-auto rounded-2xl rounded-bl-md px-3 py-2 text-sm bg-gray-100 text-gray-800'
+                    }
+                  >
+                    {msg.content}
+                  </div>
                 </div>
-                <span className="text-[10px] text-gray-400 mt-0.5 px-1">
+                <span className="text-[10px] opacity-70 text-gray-500 mt-0.5 px-1">
                   {formatRelativeTime(msg.created_at)}
                 </span>
               </div>
@@ -116,7 +120,7 @@ export default function ApplicationChat({
       </div>
 
       {error && (
-        <p className="text-xs text-red-700 bg-red-50 px-3 py-2 border-t border-red-100">
+        <p className="text-xs text-primary bg-orange-50/80 px-3 py-2 border-t border-primary/10">
           {error}
         </p>
       )}

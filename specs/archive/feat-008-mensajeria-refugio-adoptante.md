@@ -4,11 +4,12 @@
 |-------|-------|
 | **ID** | FEAT-008 |
 | **Título** | Mensajería in-app entre refugio y adoptantes (chat en solicitud) |
-| **Estado** | `implementado` |
+| **Estado** | `archivado` |
 | **Actor** | Refugio / Propietario (primario); Adoptante potencial (secundario) |
 | **Depende de** | FEAT-004 (`adoption_applications`), FEAT-005 (drawer solicitudes), `auth.users`, `pets`, `refugios` |
 | **Creado** | 2026-06-03 |
-| **Actualizado** | 2026-06-03 |
+| **Actualizado** | 2026-06-04 |
+| **Archivado** | 2026-06-04 |
 | **Estándares** | `.openspec/standards.md` |
 
 > **Nota:** FEAT-005 introdujo **`adoption_messages`** (`body`, `sender_role`).  
@@ -483,14 +484,14 @@ export function useChat(applicationId, currentUserId) {
 
 ## 7. Definición de hecho (DoD)
 
-- [ ] Tabla **`messages`** con columnas contractuales.
-- [ ] RLS: remitente INSERT; remitente y destinatario SELECT por `application_id`.
-- [ ] Realtime activo en `messages` y **`useChat`** operativo.
-- [ ] **`ApplicationChat`** anidado en detalle de solicitud (refugio + adoptante).
-- [ ] Burbujas propias `#81B29A` derecha; ajenas gris izquierda.
-- [ ] Migraciones 021–022 aplicadas en Supabase.
-- [ ] CA-01 a CA-10 verificados (`/verify`).
-- [ ] Spec archivada (`/archive`).
+- [x] Tabla **`messages`** con columnas contractuales.
+- [x] RLS: remitente INSERT; remitente y destinatario SELECT por `application_id`.
+- [x] Realtime activo en `messages` y **`useChat`** operativo.
+- [x] **`ApplicationChat`** anidado en detalle de solicitud (refugio + adoptante).
+- [x] Burbujas propias `#81B29A` derecha; ajenas gris izquierda.
+- [x] Migraciones 021–022 aplicadas en Supabase.
+- [x] CA-01 a CA-10 verificados (`/verify`).
+- [x] Spec archivada (`/archive`).
 
 ---
 

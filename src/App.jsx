@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ClipboardList, Heart, Inbox, PawPrint } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
+import { ClipboardList, Heart, Inbox, PawPrint, Shield } from 'lucide-react'
+import Swal from 'sweetalert2'
 import AuthPanel from './components/auth/AuthPanel.jsx'
 import { supabase } from './lib/supabase.js'
 import BrowsePetsPage from './pages/BrowsePetsPage.jsx'
@@ -12,8 +14,10 @@ import { useFavorites } from './hooks/useFavorites.js'
 import { useManageApplications } from './hooks/useManageApplications.js'
 import { useNotifications } from './hooks/useNotifications.js'
 import { usePets } from './hooks/usePets.js'
+import { useProfile } from './hooks/useProfile.js'
 
-function App() {
+export default function PublicApp() {
+  const location = useLocation()
   const [session, setSession] = useState(null)
   const [recentPet, setRecentPet] = useState(null)
   const [activeTab, setActiveTab] = useState('explore')
@@ -26,6 +30,27 @@ function App() {
   const favorites = useFavorites(userId)
   const { count: favoritesCount } = favorites
   const notifications = useNotifications(userId)
+  const { isAdmin, refetch: refetchProfile } = useProfile(userId)
+
+  useEffect(() => {
+    if (location.state?.forbidden) {
+      void Swal.fire({
+        icon: 'error',
+        title: 'Acceso denegado',
+        text: 'No tienes permisos de administrador.',
+        confirmButtonColor: '#E07A5F',
+      })
+      window.history.replaceState({}, document.title)
+    } else if (location.state?.authRequired) {
+      void Swal.fire({
+        icon: 'warning',
+        title: 'Inicia sesión',
+        text: 'Debes iniciar sesión para acceder al panel de administración.',
+        confirmButtonColor: '#E07A5F',
+      })
+      window.history.replaceState({}, document.title)
+    }
+  }, [location.state])
 
   const refreshSession = useCallback(() => {
     if (!supabase) {
@@ -139,6 +164,20 @@ function App() {
             <button type="button" onClick={() => setActiveTab('register')} className={tabClass('register')}>
               Registrar mascota
             </button>
+            {session?.user && (
+              <Link
+                to="/admin"
+                onClick={() => void refetchProfile()}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition inline-flex items-center gap-1.5 ${
+                  isAdmin
+                    ? 'bg-primary text-white hover:bg-primary/90'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Shield className="w-4 h-4" aria-hidden />
+                Admin
+              </Link>
+            )}
           </nav>
           {session?.user && (
             <NotificationDropdown
@@ -220,4 +259,3 @@ function App() {
   )
 }
 
-export default App
