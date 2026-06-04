@@ -13,7 +13,7 @@ import ApplicationTable from './ApplicationTable.jsx'
  *   setViewMode: (mode: 'table' | 'kanban') => void,
  *   approve: (id: string) => Promise<void>,
  *   reject: (id: string) => Promise<void>,
- *   sendMessage: (applicationId: string, body: string) => Promise<void>,
+ *   currentUserId: string | null,
  *   isMutating: boolean,
  * }} props
  */
@@ -25,7 +25,7 @@ export default function RefugeApplicationsDashboard({
   setViewMode,
   approve,
   reject,
-  sendMessage,
+  currentUserId,
   isMutating,
 }) {
   const [selected, setSelected] = useState(null)
@@ -114,7 +114,7 @@ export default function RefugeApplicationsDashboard({
         onClose={() => setSelected(null)}
         onApprove={handleApprove}
         onReject={handleReject}
-        onSendMessage={sendMessage}
+        currentUserId={currentUserId}
         isMutating={isMutating}
       />
     </div>

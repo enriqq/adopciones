@@ -1,4 +1,5 @@
 import { Filter, SlidersHorizontal, X } from 'lucide-react'
+import SearchAlertSaveButton from '../notifications/SearchAlertSaveButton.jsx'
 import {
   EDAD_PRESETS,
   ESPECIE_OPTIONS,
@@ -13,10 +14,17 @@ const inputClass =
  *   filters: object,
  *   onChange: (updater: object | ((prev: object) => object)) => void,
  *   onClear: () => void,
+ *   userId?: string | null,
  *   className?: string,
  * }} props
  */
-export default function PetSearchSidebar({ filters, onChange, onClear, className = '' }) {
+export default function PetSearchSidebar({
+  filters,
+  onChange,
+  onClear,
+  userId = null,
+  className = '',
+}) {
   const set = (partial) =>
     onChange((prev) => ({
       ...prev,
@@ -182,6 +190,8 @@ export default function PetSearchSidebar({ filters, onChange, onClear, className
           Con gatos
         </label>
       </fieldset>
+
+      <SearchAlertSaveButton filters={filters} userId={userId} />
 
       <p className="text-xs text-gray-400 flex items-center gap-1">
         <Filter className="w-3.5 h-3.5" />

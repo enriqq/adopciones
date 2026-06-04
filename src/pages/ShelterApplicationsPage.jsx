@@ -5,9 +5,10 @@ import RefugeApplicationsDashboard from '../components/refuge/RefugeApplications
  * @param {{
  *   refugioNombre: string | null,
  *   manage: ReturnType<typeof import('../hooks/useManageApplications.js').useManageApplications>,
+ *   currentUserId: string | null,
  * }} props
  */
-export default function ShelterApplicationsPage({ refugioNombre, manage }) {
+export default function ShelterApplicationsPage({ refugioNombre, manage, currentUserId }) {
   const {
     applications,
     isLoading,
@@ -16,7 +17,6 @@ export default function ShelterApplicationsPage({ refugioNombre, manage }) {
     setViewMode,
     approve,
     reject,
-    sendMessage,
     isMutating,
     pendingCount,
   } = manage
@@ -52,7 +52,7 @@ export default function ShelterApplicationsPage({ refugioNombre, manage }) {
         setViewMode={setViewMode}
         approve={approve}
         reject={reject}
-        sendMessage={sendMessage}
+        currentUserId={currentUserId}
         isMutating={isMutating}
       />
     </section>

@@ -50,12 +50,8 @@ export async function fetchPetDetail(petId, signal) {
     throw new Error('Supabase no está configurado. Revisa tu archivo .env.local.')
   }
 
-  let query = supabase
-    .from('pets')
-    .select(SELECT_DETAIL)
-    .eq('id', petId)
-    .eq('estado_adopcion', 'disponible')
-    .maybeSingle()
+  // RLS decide visibilidad (disponible, guardada, solicitada, dueño refugio)
+  let query = supabase.from('pets').select(SELECT_DETAIL).eq('id', petId).maybeSingle()
 
   if (signal) {
     query = query.abortSignal(signal)

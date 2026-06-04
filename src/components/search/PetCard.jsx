@@ -1,4 +1,4 @@
-import { Baby, Cat, Dog, MapPin, Ruler } from 'lucide-react'
+import { Baby, Cat, Dog, Heart, MapPin, Ruler } from 'lucide-react'
 
 const TAMANO_LABELS = {
   pequeno: 'Pequeño',
@@ -6,11 +6,36 @@ const TAMANO_LABELS = {
   grande: 'Grande',
 }
 
+const ESTADO_LABELS = {
+  disponible: 'Disponible',
+  en_proceso: 'En proceso',
+  adoptado: 'Adoptado',
+}
+
+const ESTADO_STYLES = {
+  disponible: 'bg-secondary/15 text-secondary border-secondary/30',
+  en_proceso: 'bg-amber-100 text-amber-800 border-amber-200',
+  adoptado: 'bg-gray-100 text-gray-600 border-gray-200',
+}
+
 /**
- * @param {{ pet: object, onSelect?: (id: string) => void }} props
+ * @param {{
+ *   pet: object,
+ *   onSelect?: (id: string) => void,
+ *   isFavorite?: boolean,
+ *   onToggleFavorite?: (petId: string) => void,
+ *   favoriteDisabled?: boolean,
+ * }} props
  */
-export default function PetCard({ pet, onSelect }) {
+export default function PetCard({
+  pet,
+  onSelect,
+  isFavorite = false,
+  onToggleFavorite,
+  favoriteDisabled = false,
+}) {
   const foto = pet.fotos_url?.[0]
+  const showFavorite = Boolean(onToggleFavorite)
 
   const handleSelect = () => {
     onSelect?.(pet.id)
@@ -45,9 +70,40 @@ export default function PetCard({ pet, onSelect }) {
             Sin foto
           </div>
         )}
+        {showFavorite && (
+          <button
+            type="button"
+            disabled={favoriteDisabled}
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggleFavorite?.(pet.id)
+            }}
+            aria-pressed={isFavorite}
+            aria-label={isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
+            className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 shadow-sm hover:bg-white transition disabled:opacity-50"
+          >
+            <Heart
+              className={`w-5 h-5 ${
+                isFavorite ? 'fill-current text-primary' : 'text-gray-400 hover:text-primary'
+              }`}
+              aria-hidden
+            />
+          </button>
+        )}
       </div>
       <div className="p-4 flex flex-col gap-2 flex-1">
-        <h3 className="font-heading text-lg text-gray-900">{pet.nombre}</h3>
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="font-heading text-lg text-gray-900">{pet.nombre}</h3>
+          {pet.estado_adopcion && pet.estado_adopcion !== 'disponible' && (
+            <span
+              className={`text-xs font-medium px-2 py-0.5 rounded-full border ${
+                ESTADO_STYLES[pet.estado_adopcion] ?? ESTADO_STYLES.en_proceso
+              }`}
+            >
+              {ESTADO_LABELS[pet.estado_adopcion] ?? pet.estado_adopcion}
+            </span>
+          )}
+        </div>
         <p className="text-sm text-gray-600 capitalize">
           {pet.especie} · {pet.raza}
         </p>

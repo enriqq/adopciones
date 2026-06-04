@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, ClipboardList, MessageSquare, PawPrint, Search } from 'lucide-react'
-import ApplicationMessageThread from '../components/refuge/ApplicationMessageThread.jsx'
+import ApplicationChat from '../components/messaging/ApplicationChat.jsx'
 import { useMyApplications } from '../hooks/useMyApplications.js'
-import { sendApplicationMessage } from '../services/refugeApplicationService.js'
 
 const STATUS_LABELS = {
   pending: 'Pendiente',
@@ -25,10 +24,6 @@ const STATUS_STYLES = {
 export default function MyApplicationsPage({ userId, onExplore }) {
   const { applications, isLoading, error } = useMyApplications(userId)
   const [expandedId, setExpandedId] = useState(null)
-
-  const handleSendMessage = async (applicationId, body) => {
-    await sendApplicationMessage(applicationId, body, 'applicant')
-  }
 
   if (!userId) {
     return (
@@ -161,11 +156,7 @@ export default function MyApplicationsPage({ userId, onExplore }) {
 
                 {isExpanded && (
                   <div className="border-t border-gray-100 px-4 py-4 bg-gray-50/50">
-                    <ApplicationMessageThread
-                      applicationId={app.id}
-                      viewerRole="applicant"
-                      onSend={handleSendMessage}
-                    />
+                    <ApplicationChat applicationId={app.id} currentUserId={userId} />
                   </div>
                 )}
               </li>

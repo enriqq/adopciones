@@ -4,19 +4,28 @@ import AuthPanel from './components/auth/AuthPanel.jsx'
 import { supabase } from './lib/supabase.js'
 import BrowsePetsPage from './pages/BrowsePetsPage.jsx'
 import CreatePetPage from './pages/CreatePetPage.jsx'
+import FavoritesPage from './pages/FavoritesPage.jsx'
 import MyApplicationsPage from './pages/MyApplicationsPage.jsx'
 import ShelterApplicationsPage from './pages/ShelterApplicationsPage.jsx'
+import NotificationDropdown from './components/notifications/NotificationDropdown.jsx'
+import { useFavorites } from './hooks/useFavorites.js'
 import { useManageApplications } from './hooks/useManageApplications.js'
+import { useNotifications } from './hooks/useNotifications.js'
 import { usePets } from './hooks/usePets.js'
 
 function App() {
   const [session, setSession] = useState(null)
   const [recentPet, setRecentPet] = useState(null)
   const [activeTab, setActiveTab] = useState('explore')
+  const [exploreFocusPetId, setExploreFocusPetId] = useState(null)
 
+  const userId = session?.user?.id ?? null
   const { refugioId, refugioNombre, isLoadingRefugio } = usePets()
   const manageApplications = useManageApplications(refugioId)
   const { pendingCount } = manageApplications
+  const favorites = useFavorites(userId)
+  const { count: favoritesCount } = favorites
+  const notifications = useNotifications(userId)
 
   const refreshSession = useCallback(() => {
     if (!supabase) {
@@ -52,6 +61,12 @@ function App() {
     }`
 
   const showRefugeTab = Boolean(session?.user && refugioId && !isLoadingRefugio)
+  const showFavoritesTab = Boolean(session?.user)
+
+  const handleAdoptionFromFavorites = (petId) => {
+    setExploreFocusPetId(petId)
+    setActiveTab('explore')
+  }
 
   return (
     <div className="min-h-svh bg-gradient-to-b from-orange-50/80 via-white to-green-50/50">
@@ -72,10 +87,28 @@ function App() {
             </div>
           </div>
 
+          <div className="flex flex-wrap items-center justify-between gap-3">
           <nav className="flex flex-wrap gap-2" aria-label="Secciones principales">
             <button type="button" onClick={() => setActiveTab('explore')} className={tabClass('explore')}>
               Explorar mascotas
             </button>
+            {showFavoritesTab && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('favorites')}
+                className={tabClass('favorites')}
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <Heart className="w-4 h-4" aria-hidden />
+                  Mis Favoritos
+                  {favoritesCount > 0 && (
+                    <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-white/20 text-xs font-semibold">
+                      {favoritesCount}
+                    </span>
+                  )}
+                </span>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setActiveTab('my-applications')}
@@ -107,6 +140,16 @@ function App() {
               Registrar mascota
             </button>
           </nav>
+          {session?.user && (
+            <NotificationDropdown
+              notifications={notifications.notifications}
+              unreadCount={notifications.unreadCount}
+              isLoading={notifications.isLoading}
+              markAsRead={notifications.markAsRead}
+              markAllAsRead={notifications.markAllAsRead}
+            />
+          )}
+          </div>
         </div>
       </header>
 
@@ -116,18 +159,34 @@ function App() {
             session={session}
             onAuthChange={refreshSession}
             onGoToMyApplications={() => setActiveTab('my-applications')}
+            favorites={favorites}
+            focusPetId={exploreFocusPetId}
+            onFocusHandled={() => setExploreFocusPetId(null)}
+          />
+        )}
+
+        {activeTab === 'favorites' && showFavoritesTab && (
+          <FavoritesPage
+            userId={userId}
+            favorites={favorites}
+            onExplore={() => setActiveTab('explore')}
+            onRequestAdoption={handleAdoptionFromFavorites}
           />
         )}
 
         {activeTab === 'my-applications' && (
           <MyApplicationsPage
-            userId={session?.user?.id ?? null}
+            userId={userId}
             onExplore={() => setActiveTab('explore')}
           />
         )}
 
         {activeTab === 'shelter-applications' && showRefugeTab && (
-          <ShelterApplicationsPage refugioNombre={refugioNombre} manage={manageApplications} />
+          <ShelterApplicationsPage
+            refugioNombre={refugioNombre}
+            manage={manageApplications}
+            currentUserId={userId}
+          />
         )}
 
         {activeTab === 'register' && (

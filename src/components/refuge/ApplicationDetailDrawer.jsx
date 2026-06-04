@@ -1,5 +1,5 @@
 import { CheckCircle, Mail, Phone, X, XCircle } from 'lucide-react'
-import ApplicationMessageThread from './ApplicationMessageThread.jsx'
+import ApplicationChat from '../messaging/ApplicationChat.jsx'
 
 const STATUS_LABELS = {
   pending: 'Pendiente',
@@ -13,7 +13,7 @@ const STATUS_LABELS = {
  *   onClose: () => void,
  *   onApprove: (id: string) => void,
  *   onReject: (id: string) => void,
- *   onSendMessage: (applicationId: string, body: string) => Promise<void>,
+ *   currentUserId: string | null,
  *   isMutating: boolean,
  * }} props
  */
@@ -22,7 +22,7 @@ export default function ApplicationDetailDrawer({
   onClose,
   onApprove,
   onReject,
-  onSendMessage,
+  currentUserId,
   isMutating,
 }) {
   if (!application) return null
@@ -151,11 +151,10 @@ export default function ApplicationDetailDrawer({
             </div>
           )}
 
-          <ApplicationMessageThread
+          <ApplicationChat
             applicationId={application.id}
-            viewerRole="refugio"
-            onSend={onSendMessage}
-            isMutating={isMutating}
+            currentUserId={currentUserId}
+            disabled={isMutating}
           />
         </div>
       </aside>

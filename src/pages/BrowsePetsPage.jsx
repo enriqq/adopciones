@@ -15,9 +15,19 @@ import AdoptionApplicationPage from './AdoptionApplicationPage.jsx'
  *   session: object | null,
  *   onAuthChange: () => void,
  *   onGoToMyApplications: () => void,
+ *   favorites: ReturnType<typeof import('../hooks/useFavorites.js').useFavorites>,
+ *   focusPetId?: string | null,
+ *   onFocusHandled?: () => void,
  * }} props
  */
-export default function BrowsePetsPage({ session, onAuthChange, onGoToMyApplications }) {
+export default function BrowsePetsPage({
+  session,
+  onAuthChange,
+  onGoToMyApplications,
+  favorites,
+  focusPetId = null,
+  onFocusHandled,
+}) {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [detailPetId, setDetailPetId] = useState(null)
   const [applicationPetId, setApplicationPetId] = useState(null)
@@ -28,6 +38,8 @@ export default function BrowsePetsPage({ session, onAuthChange, onGoToMyApplicat
   const { isApplicant, isLoading: applicantLoading, ensureProfile } = useApplicant(userId)
 
   const { filters, setFilters, results, isLoading, error, clearFilters } = usePetsSearch()
+
+  const { isFavorite, toggleFavorite, isMutating: favoritesMutating } = favorites
 
   const openApplication = (petId) => {
     setApplicationPetId(petId)
@@ -104,12 +116,20 @@ export default function BrowsePetsPage({ session, onAuthChange, onGoToMyApplicat
     )
   }
 
-  if (detailPetId) {
+  const activeDetailId = focusPetId ?? detailPetId
+
+  if (activeDetailId) {
     return (
       <PetDetail
-        petId={detailPetId}
-        onBack={() => setDetailPetId(null)}
+        petId={activeDetailId}
+        onBack={() => {
+          if (focusPetId) onFocusHandled?.()
+          else setDetailPetId(null)
+        }}
         onRequestAdoption={handleRequestAdoption}
+        isFavorite={isFavorite(activeDetailId)}
+        onToggleFavorite={toggleFavorite}
+        favoriteDisabled={favoritesMutating}
       />
     )
   }
@@ -118,6 +138,7 @@ export default function BrowsePetsPage({ session, onAuthChange, onGoToMyApplicat
     <PetSearchSidebar
       filters={filters}
       onChange={setFilters}
+      userId={userId}
       onClear={() => {
         clearFilters()
         setMobileFiltersOpen(false)
@@ -173,6 +194,9 @@ export default function BrowsePetsPage({ session, onAuthChange, onGoToMyApplicat
             isLoading={isLoading}
             error={error}
             onSelectPet={setDetailPetId}
+            isFavorite={isFavorite}
+            onToggleFavorite={toggleFavorite}
+            favoriteDisabled={favoritesMutating}
           />
         </div>
       </div>

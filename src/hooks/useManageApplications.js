@@ -5,12 +5,8 @@ import {
   fetchRefugeApplications,
   mapSupabaseError,
   rejectApplication,
-  sendApplicationMessage,
 } from '../services/refugeApplicationService.js'
-import {
-  validateDecisionMessage,
-  validateMessageBody,
-} from '../lib/validators/refugeDecisionValidators.js'
+import { validateDecisionMessage } from '../lib/validators/refugeDecisionValidators.js'
 
 /**
  * @param {string | null} refugioId
@@ -173,27 +169,6 @@ export function useManageApplications(refugioId) {
     [refetch, showErrorFeedback, showSuccessFeedback],
   )
 
-  const sendMessage = useCallback(
-    async (applicationId, body) => {
-      const validationError = validateMessageBody(body)
-      if (validationError) {
-        await showErrorFeedback(validationError)
-        return
-      }
-
-      setIsMutating(true)
-      try {
-        await sendApplicationMessage(applicationId, body, 'refugio')
-      } catch (err) {
-        await showErrorFeedback(mapSupabaseError(err))
-        throw err
-      } finally {
-        setIsMutating(false)
-      }
-    },
-    [showErrorFeedback],
-  )
-
   const pendingCount = applications.filter((a) => a.status === 'pending').length
 
   return {
@@ -205,7 +180,6 @@ export function useManageApplications(refugioId) {
     refetch,
     approve,
     reject,
-    sendMessage,
     isMutating,
     pendingCount,
   }

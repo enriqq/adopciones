@@ -10,9 +10,19 @@ import PetPhotoCarousel from './PetPhotoCarousel.jsx'
  *   petId: string,
  *   onBack: () => void,
  *   onRequestAdoption: (petId: string) => void,
+ *   isFavorite?: boolean,
+ *   onToggleFavorite?: (petId: string) => void,
+ *   favoriteDisabled?: boolean,
  * }} props
  */
-export default function PetDetail({ petId, onBack, onRequestAdoption }) {
+export default function PetDetail({
+  petId,
+  onBack,
+  onRequestAdoption,
+  isFavorite = false,
+  onToggleFavorite,
+  favoriteDisabled = false,
+}) {
   const { pet, isLoading, error, notFound } = usePetDetail(petId)
 
   const handleAdopt = () => {
@@ -76,10 +86,32 @@ export default function PetDetail({ petId, onBack, onRequestAdoption }) {
       <PetPhotoCarousel photos={pet.fotos_url} alt={pet.nombre} />
 
       <header className="space-y-2">
-        <h1 className="font-heading text-3xl md:text-4xl text-gray-900">{pet.nombre}</h1>
-        <p className="text-gray-600 capitalize">
-          {pet.especie} · {pet.raza} · {pet.edad}
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="font-heading text-3xl md:text-4xl text-gray-900">{pet.nombre}</h1>
+            <p className="text-gray-600 capitalize">
+              {pet.especie} · {pet.raza} · {pet.edad}
+            </p>
+          </div>
+          {onToggleFavorite && (
+            <button
+              type="button"
+              disabled={favoriteDisabled}
+              onClick={() => onToggleFavorite(petId)}
+              aria-pressed={isFavorite}
+              aria-label={isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium hover:border-primary/30 transition disabled:opacity-50"
+            >
+              <Heart
+                className={`w-5 h-5 ${
+                  isFavorite ? 'fill-current text-primary' : 'text-gray-500'
+                }`}
+                aria-hidden
+              />
+              {isFavorite ? 'En favoritos' : 'Guardar'}
+            </button>
+          )}
+        </div>
       </header>
 
       <PetCharacteristicBadges pet={pet} />
@@ -120,14 +152,20 @@ export default function PetDetail({ petId, onBack, onRequestAdoption }) {
         </span>
       </p>
 
-      <button
-        type="button"
-        onClick={handleAdopt}
-        className="w-full py-5 text-xl font-heading rounded-2xl bg-primary text-white shadow-lg hover:bg-primary/90 active:scale-[0.99] transition flex items-center justify-center gap-2"
-      >
-        <Heart className="w-6 h-6" aria-hidden />
-        Adoptar
-      </button>
+      {pet.estado_adopcion === 'disponible' ? (
+        <button
+          type="button"
+          onClick={handleAdopt}
+          className="w-full py-5 text-xl font-heading rounded-2xl bg-primary text-white shadow-lg hover:bg-primary/90 active:scale-[0.99] transition flex items-center justify-center gap-2"
+        >
+          <Heart className="w-6 h-6" aria-hidden />
+          Adoptar
+        </button>
+      ) : (
+        <p className="text-sm text-center text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          Esta mascota ya no está disponible para nuevas solicitudes de adopción.
+        </p>
+      )}
     </article>
   )
 }

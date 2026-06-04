@@ -2,7 +2,10 @@ import { useState } from 'react'
 import Swal from 'sweetalert2'
 import { Heart, Loader2, LogIn, LogOut, UserPlus } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
-import { ensureApplicantProfile } from '../../services/adoptionApplicationService.js'
+import {
+  ensureApplicantProfile,
+  fetchApplicantProfile,
+} from '../../services/adoptionApplicationService.js'
 import { mapSupabaseError } from '../../services/petService.js'
 
 const inputClass =
@@ -44,8 +47,19 @@ export default function ApplicantAuthPanel({ session, onAuthChange, compact = fa
 
     try {
       if (mode === 'login') {
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
+
+        if (data.user) {
+          const { data: profile } = await fetchApplicantProfile(data.user.id)
+          if (profile) {
+            await ensureApplicantProfile(data.user.id, {
+              nombre: profile.nombre,
+              telefono: profile.telefono ?? '',
+              email: data.user.email ?? email.trim(),
+            })
+          }
+        }
       } else {
         if (nombre.trim().length < 2) {
           throw new Error('Indica tu nombre (mínimo 2 caracteres).')

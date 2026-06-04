@@ -35,6 +35,13 @@ En el **SQL Editor** del dashboard, ejecuta en orden:
 13. `supabase/migrations/013_adoption_embed_select.sql` — SELECT `pets`/`refugios` para embed en Mis Solicitudes
 14. `supabase/migrations/014_refuge_application_mgmt.sql` — `applicants.email`, decisión en solicitudes, `adoption_messages`, vista `v_refuge_application_rows`
 15. `supabase/migrations/015_refuge_application_mgmt_rls.sql` — UPDATE `status` refugio, trigger guard, RLS mensajes
+16. `supabase/migrations/016_saved_pets.sql` — tabla `saved_pets`, vista `v_user_saved_pets`
+17. `supabase/migrations/017_saved_pets_rls.sql` — RLS favoritos (`auth.uid()`), `pets_select_saved_by_user`
+18. `supabase/migrations/018_saved_pets_embed_rls.sql` — SELECT `refugios`/`medical_records` para embed de favoritos
+19. `supabase/migrations/019_search_alerts_notifications.sql` — tablas `search_alerts` y `notifications`, matching, trigger en `pets`
+20. `supabase/migrations/020_search_alerts_notifications_rls.sql` — RLS alertas/notificaciones, guard de inmutabilidad en `notifications`
+21. `supabase/migrations/021_messages.sql` — tabla `messages`, migración desde `adoption_messages`, Realtime
+22. `supabase/migrations/022_messages_rls.sql` — RLS chat (remitente INSERT; participantes SELECT)
 
 ### Usuario refugio de prueba
 
@@ -83,9 +90,22 @@ src/
   components/adoption/AdoptionForm.jsx
   pages/AdoptionApplicationPage.jsx
   pages/MyApplicationsPage.jsx
+  pages/FavoritesPage.jsx
+  hooks/useFavorites.js
+  services/savedPetsService.js
+  hooks/useNotifications.js
+  services/searchAlertService.js
+  services/notificationService.js
+  components/notifications/NotificationDropdown.jsx
+  components/notifications/SearchAlertSaveButton.jsx
+  components/messaging/ApplicationChat.jsx
+  hooks/useChat.js
+  services/messageService.js
   components/auth/ApplicantAuthPanel.jsx
 specs/archive/feat-004-solicitud-adopcion.md
 specs/features/feat-005-gestion-solicitudes-refugio.md
+specs/archive/feat-006-favoritos-adoptante.md
+specs/archive/feat-007-notificaciones-busqueda.md
 .openspec/standards.md
 ```
 
@@ -96,4 +116,7 @@ specs/features/feat-005-gestion-solicitudes-refugio.md
 - FEAT-003 archivada: `specs/archive/feat-003-detalle-mascota.md`
 - FEAT-004 archivada: `specs/archive/feat-004-solicitud-adopcion.md`
 - FEAT-005 activa: `specs/features/feat-005-gestion-solicitudes-refugio.md`
+- FEAT-006 archivada: `specs/archive/feat-006-favoritos-adoptante.md`
+- FEAT-007 archivada: `specs/archive/feat-007-notificaciones-busqueda.md`
+- FEAT-008 activa: `specs/features/feat-008-mensajeria-refugio-adoptante.md`
 - Flujo OpenSpec: `.cursor/custom-commands.json`
