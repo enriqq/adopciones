@@ -1,0 +1,18 @@
+{
+  "new": {
+    "prompt": "Actúa como OpenSpec y Delta. Transforma la historia de usuario en una especificación formal (Artefacto de propuesta) guardándola en specs/features/. Define decisiones de arquitectura, contrato de datos (Supabase schema/RLS), criterios de aceptación y tareas atómicas.",
+    "context": "Incluir .openspec/standards.md"
+  },
+  "apply": {
+    "prompt": "Ejecuta las tareas atómicas de la spec activa de manera disciplinada. Genera el código React, las consultas a Supabase y los tests necesarios estrictamente basados en el contrato.",
+    "context": "Spec activa en specs/features/ y código existente"
+  },
+  "verify": {
+    "prompt": "Valida objetivamente si el código generado cumple al 100% con el contrato de la especificación activa, revisando linting y reglas de negocio.",
+    "context": "Spec activa y código generado"
+  },
+  "archive": {
+    "prompt": "Mueve la especificación completada de specs/features/ a specs/archive/ para convertirla en historia del sistema.",
+    "context": "Spec activa validada"
+  }
+}
