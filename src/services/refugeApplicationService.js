@@ -88,20 +88,44 @@ export async function fetchRefugeApplications() {
 export async function updateApplicationStatus(applicationId, status, mensaje = '') {
   if (!supabase) throw new Error('Supabase no está configurado.')
 
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (!session?.user) {
+    throw new Error('Debes iniciar sesión como refugio.')
+  }
+
+  const payload = {
+    status,
+    mensaje_decision: mensaje.trim(),
+    decided_at: new Date().toISOString(),
+  }
+
   const { data, error } = await supabase
     .from('adoption_applications')
-    .update({
-      status,
-      mensaje_decision: mensaje.trim(),
-      decided_at: new Date().toISOString(),
-    })
+    .update(payload)
     .eq('id', applicationId)
     .eq('status', 'pending')
-    .select('id, pet_id, status')
+    .select('id, pet_id, status, applicant_id')
     .maybeSingle()
 
-  if (error) throw error
-  if (!data) throw new Error('La solicitud ya fue procesada o no existe.')
+  if (error) {
+    const code = error.code ?? ''
+    if (code === '42501' || error.message?.includes('row-level security')) {
+      throw new Error(
+        'No tienes permiso para actualizar esta solicitud. Verifica que seas el refugio dueño de la mascota.',
+      )
+    }
+    throw error
+  }
+
+  if (!data) {
+    throw new Error(
+      'No se pudo actualizar. La solicitud ya fue procesada, no existe o no pertenece a tu refugio.',
+    )
+  }
+
   return data
 }
 

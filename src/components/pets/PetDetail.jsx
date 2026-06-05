@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowLeft, Heart, MapPin } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ChevronRight, Heart, MapPin } from 'lucide-react'
 import { usePetDetail } from '../../hooks/usePetDetail.js'
 import PetCharacteristicBadges from './PetCharacteristicBadges.jsx'
 import PetDetailSkeleton from './PetDetailSkeleton.jsx'
@@ -10,6 +10,7 @@ import PetPhotoCarousel from './PetPhotoCarousel.jsx'
  *   petId: string,
  *   onBack: () => void,
  *   onRequestAdoption: (petId: string) => void,
+ *   onViewShelter?: (shelterId: string) => void,
  *   isFavorite?: boolean,
  *   onToggleFavorite?: (petId: string) => void,
  *   favoriteDisabled?: boolean,
@@ -19,6 +20,7 @@ export default function PetDetail({
   petId,
   onBack,
   onRequestAdoption,
+  onViewShelter,
   isFavorite = false,
   onToggleFavorite,
   favoriteDisabled = false,
@@ -36,13 +38,13 @@ export default function PetDetail({
   if (error) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-12 text-center space-y-4">
-        <p className="text-red-700 bg-red-50 border border-red-200 rounded-xl p-6 text-sm">
+        <p className="text-red-700 bg-red-50 border border-red-200 rounded-xl p-6 text-sm font-body">
           {error}
         </p>
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-2 text-sm text-primary font-medium hover:underline"
+          className="inline-flex items-center gap-2 text-sm text-primary font-medium hover:underline font-body"
         >
           <ArrowLeft className="w-4 h-4" aria-hidden />
           Volver al catálogo
@@ -55,13 +57,13 @@ export default function PetDetail({
     return (
       <div className="max-w-3xl mx-auto px-4 py-12 text-center space-y-4">
         <h2 className="font-heading text-2xl text-gray-900">Mascota no disponible</h2>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 font-body">
           Esta mascota no existe o ya no está en adopción.
         </p>
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-2 text-sm text-primary font-medium hover:underline"
+          className="inline-flex items-center gap-2 text-sm text-primary font-medium hover:underline font-body"
         >
           <ArrowLeft className="w-4 h-4" aria-hidden />
           Volver al catálogo
@@ -77,7 +79,7 @@ export default function PetDetail({
       <button
         type="button"
         onClick={onBack}
-        className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-primary transition"
+        className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-primary transition font-body"
       >
         <ArrowLeft className="w-4 h-4" aria-hidden />
         Volver al catálogo
@@ -89,7 +91,7 @@ export default function PetDetail({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="font-heading text-3xl md:text-4xl text-gray-900">{pet.nombre}</h1>
-            <p className="text-gray-600 capitalize">
+            <p className="text-gray-600 capitalize font-body">
               {pet.especie} · {pet.raza} · {pet.edad}
             </p>
           </div>
@@ -100,7 +102,7 @@ export default function PetDetail({
               onClick={() => onToggleFavorite(petId)}
               aria-pressed={isFavorite}
               aria-label={isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium hover:border-primary/30 transition disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium font-body hover:border-primary/30 transition disabled:opacity-50"
             >
               <Heart
                 className={`w-5 h-5 ${
@@ -120,14 +122,14 @@ export default function PetDetail({
         <h2 className="font-heading text-xl text-gray-900 border-b border-gray-200 pb-2">
           Sobre mí
         </h2>
-        <p className="text-gray-700 leading-relaxed whitespace-pre-line">{pet.descripcion}</p>
+        <p className="text-gray-700 leading-relaxed whitespace-pre-line font-body">{pet.descripcion}</p>
       </section>
 
       <section className="space-y-3">
         <h2 className="font-heading text-xl text-gray-900 border-b border-gray-200 pb-2">
           Temperamento
         </h2>
-        <p className="text-gray-700 leading-relaxed whitespace-pre-line">{pet.temperamento}</p>
+        <p className="text-gray-700 leading-relaxed whitespace-pre-line font-body">{pet.temperamento}</p>
       </section>
 
       <PetMedicalCard record={pet.medicalRecord} />
@@ -137,20 +139,44 @@ export default function PetDetail({
           <AlertTriangle className="w-5 h-5 text-primary shrink-0" aria-hidden />
           <h2 className="font-heading text-xl text-gray-900">Requisitos para el hogar</h2>
         </div>
-        <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+        <p className="text-gray-700 leading-relaxed whitespace-pre-line font-body">
           {requisitos || 'Sin requisitos especiales para el hogar.'}
         </p>
       </section>
 
-      <p className="flex items-center gap-2 text-sm text-gray-500">
-        <MapPin className="w-4 h-4 text-secondary shrink-0" aria-hidden />
-        <span>
-          <span className="font-medium text-gray-700">{pet.refugio_nombre}</span>
-          {(pet.ciudad || pet.refugio_estado) && (
-            <> · {[pet.ciudad, pet.refugio_estado].filter(Boolean).join(', ')}</>
-          )}
-        </span>
-      </p>
+      {pet.refugio_id && onViewShelter ? (
+        <button
+          type="button"
+          onClick={() => onViewShelter(pet.refugio_id)}
+          className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-gray-200 bg-white hover:border-primary/30 hover:bg-primary/5 transition text-left group"
+        >
+          <span className="flex items-center gap-2 text-sm text-gray-600 font-body">
+            <MapPin className="w-4 h-4 text-secondary shrink-0" aria-hidden />
+            <span>
+              <span className="font-medium text-gray-800 group-hover:text-primary transition">
+                {pet.refugio_nombre}
+              </span>
+              {(pet.ciudad || pet.refugio_estado) && (
+                <> · {[pet.ciudad, pet.refugio_estado].filter(Boolean).join(', ')}</>
+              )}
+            </span>
+          </span>
+          <span className="inline-flex items-center gap-1 text-sm font-medium text-primary shrink-0 font-body">
+            Ver refugio
+            <ChevronRight className="w-4 h-4" aria-hidden />
+          </span>
+        </button>
+      ) : (
+        <p className="flex items-center gap-2 text-sm text-gray-500 font-body">
+          <MapPin className="w-4 h-4 text-secondary shrink-0" aria-hidden />
+          <span>
+            <span className="font-medium text-gray-700">{pet.refugio_nombre}</span>
+            {(pet.ciudad || pet.refugio_estado) && (
+              <> · {[pet.ciudad, pet.refugio_estado].filter(Boolean).join(', ')}</>
+            )}
+          </span>
+        </p>
+      )}
 
       {pet.estado_adopcion === 'disponible' ? (
         <button
@@ -162,7 +188,7 @@ export default function PetDetail({
           Adoptar
         </button>
       ) : (
-        <p className="text-sm text-center text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+        <p className="text-sm text-center text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 font-body">
           Esta mascota ya no está disponible para nuevas solicitudes de adopción.
         </p>
       )}

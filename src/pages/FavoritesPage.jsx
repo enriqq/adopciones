@@ -2,22 +2,26 @@ import { useState } from 'react'
 import { Heart, Search } from 'lucide-react'
 import PetDetail from '../components/pets/PetDetail.jsx'
 import PetResultsGrid from '../components/search/PetResultsGrid.jsx'
+import ShelterProfilePage from './ShelterProfilePage.jsx'
 
 /**
  * @param {{
- *   userId: string | null,
+ *   session: object | null,
  *   favorites: ReturnType<typeof import('../hooks/useFavorites.js').useFavorites>,
  *   onExplore: () => void,
  *   onRequestAdoption: (petId: string) => void,
  * }} props
  */
 export default function FavoritesPage({
-  userId,
+  session,
   favorites,
   onExplore,
   onRequestAdoption,
 }) {
   const [detailPetId, setDetailPetId] = useState(null)
+  const [shelterProfileId, setShelterProfileId] = useState(null)
+
+  const userId = session?.user?.id ?? null
 
   const {
     savedPets,
@@ -32,10 +36,27 @@ export default function FavoritesPage({
   if (!userId) {
     return (
       <div className="max-w-2xl mx-auto text-center py-12 space-y-4">
-        <p className="text-gray-600 text-sm">
+        <p className="text-gray-600 text-sm font-body">
           Inicia sesión para ver tus mascotas favoritas.
         </p>
       </div>
+    )
+  }
+
+  if (shelterProfileId) {
+    return (
+      <ShelterProfilePage
+        shelterId={shelterProfileId}
+        onBack={() => setShelterProfileId(null)}
+        session={session}
+        onSelectPet={(petId) => {
+          setShelterProfileId(null)
+          setDetailPetId(petId)
+        }}
+        isFavorite={isFavorite}
+        onToggleFavorite={toggleFavorite}
+        favoriteDisabled={isMutating}
+      />
     )
   }
 
@@ -45,6 +66,7 @@ export default function FavoritesPage({
         petId={detailPetId}
         onBack={() => setDetailPetId(null)}
         onRequestAdoption={onRequestAdoption}
+        onViewShelter={setShelterProfileId}
         isFavorite={isFavorite(detailPetId)}
         onToggleFavorite={toggleFavorite}
         favoriteDisabled={isMutating}
@@ -69,7 +91,7 @@ export default function FavoritesPage({
               </span>
             )}
           </div>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 font-body">
             Mascotas que guardaste para revisar y comparar
           </p>
         </div>
@@ -90,7 +112,7 @@ export default function FavoritesPage({
           <button
             type="button"
             onClick={onExplore}
-            className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-primary/90 transition"
+            className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-lg text-sm font-medium font-body hover:bg-primary/90 transition"
           >
             <Search className="w-4 h-4" aria-hidden />
             Explorar mascotas

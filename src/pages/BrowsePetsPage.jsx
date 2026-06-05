@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Swal from 'sweetalert2'
 import { Filter, Search } from 'lucide-react'
-import ApplicantAuthPanel from '../components/auth/ApplicantAuthPanel.jsx'
+import UnifiedAuthPanel from '../components/auth/UnifiedAuthPanel.jsx'
 import ApplicantProfileSetup from '../components/adoption/ApplicantProfileSetup.jsx'
 import PetDetail from '../components/pets/PetDetail.jsx'
 import PetResultsGrid from '../components/search/PetResultsGrid.jsx'
@@ -9,6 +9,7 @@ import PetSearchSidebar from '../components/search/PetSearchSidebar.jsx'
 import { useApplicant } from '../hooks/useApplicant.js'
 import { usePetsSearch } from '../hooks/usePetsSearch.js'
 import AdoptionApplicationPage from './AdoptionApplicationPage.jsx'
+import ShelterProfilePage from './ShelterProfilePage.jsx'
 
 /**
  * @param {{
@@ -33,6 +34,7 @@ export default function BrowsePetsPage({
   const [applicationPetId, setApplicationPetId] = useState(null)
   const [showApplicantAuth, setShowApplicantAuth] = useState(false)
   const [profileSetupPetId, setProfileSetupPetId] = useState(null)
+  const [shelterProfileId, setShelterProfileId] = useState(null)
 
   const userId = session?.user?.id ?? null
   const { isApplicant, isLoading: applicantLoading, ensureProfile } = useApplicant(userId)
@@ -118,6 +120,24 @@ export default function BrowsePetsPage({
 
   const activeDetailId = focusPetId ?? detailPetId
 
+  if (shelterProfileId) {
+    return (
+      <ShelterProfilePage
+        shelterId={shelterProfileId}
+        onBack={() => setShelterProfileId(null)}
+        session={session}
+        onLoginPrompt={() => setShowApplicantAuth(true)}
+        onSelectPet={(petId) => {
+          setShelterProfileId(null)
+          setDetailPetId(petId)
+        }}
+        isFavorite={isFavorite}
+        onToggleFavorite={toggleFavorite}
+        favoriteDisabled={favoritesMutating}
+      />
+    )
+  }
+
   if (activeDetailId) {
     return (
       <PetDetail
@@ -127,6 +147,7 @@ export default function BrowsePetsPage({
           else setDetailPetId(null)
         }}
         onRequestAdoption={handleRequestAdoption}
+        onViewShelter={setShelterProfileId}
         isFavorite={isFavorite(activeDetailId)}
         onToggleFavorite={toggleFavorite}
         favoriteDisabled={favoritesMutating}
@@ -150,7 +171,7 @@ export default function BrowsePetsPage({
     <section aria-labelledby="explorar-mascotas">
       {(!session?.user || showApplicantAuth) && (
         <div className="max-w-md mx-auto mb-6">
-          <ApplicantAuthPanel
+          <UnifiedAuthPanel
             session={session}
             onAuthChange={() => {
               onAuthChange()

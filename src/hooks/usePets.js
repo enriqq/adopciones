@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import {
   createPet as createPetService,
-  createRefugioForUser,
   getRefugioByUserId,
   mapSupabaseError,
 } from '../services/petService.js'
@@ -62,13 +61,7 @@ export function usePets() {
     let { data, error: fetchError } = await getRefugioByUserId(uid)
     if (fetchError) throw fetchError
 
-    if (!data) {
-      const created = await createRefugioForUser(uid)
-      if (created.error) throw created.error
-      data = created.data
-    }
-
-    return { id: data.id, nombre: data.nombre }
+    return { id: data?.id ?? null, nombre: data?.nombre ?? null }
   }, [])
 
   useEffect(() => {

@@ -1,14 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { ClipboardList, Heart, Inbox, PawPrint, Shield } from 'lucide-react'
+import { ClipboardList, Heart, Inbox, PawPrint, Shield, User } from 'lucide-react'
 import Swal from 'sweetalert2'
-import AuthPanel from './components/auth/AuthPanel.jsx'
+import UnifiedAuthPanel from './components/auth/UnifiedAuthPanel.jsx'
 import { supabase } from './lib/supabase.js'
+import { getVisibleNav, isTabAllowed } from './lib/navVisibility.js'
 import BrowsePetsPage from './pages/BrowsePetsPage.jsx'
 import CreatePetPage from './pages/CreatePetPage.jsx'
 import FavoritesPage from './pages/FavoritesPage.jsx'
 import MyApplicationsPage from './pages/MyApplicationsPage.jsx'
-import ShelterApplicationsPage from './pages/ShelterApplicationsPage.jsx'
+import ProfilePage from './pages/ProfilePage.jsx'
 import NotificationDropdown from './components/notifications/NotificationDropdown.jsx'
 import { useFavorites } from './hooks/useFavorites.js'
 import { useManageApplications } from './hooks/useManageApplications.js'
@@ -24,20 +25,32 @@ export default function PublicApp() {
   const [exploreFocusPetId, setExploreFocusPetId] = useState(null)
 
   const userId = session?.user?.id ?? null
-  const { refugioId, refugioNombre, isLoadingRefugio } = usePets()
+  const { refugioId, isLoadingRefugio } = usePets()
   const manageApplications = useManageApplications(refugioId)
   const { pendingCount } = manageApplications
   const favorites = useFavorites(userId)
   const { count: favoritesCount } = favorites
   const notifications = useNotifications(userId)
-  const { isAdmin, refetch: refetchProfile } = useProfile(userId)
+  const { profile, isAdmin, systemRole, refetch: refetchProfile, isLoading: isLoadingProfile } =
+    useProfile(userId)
+
+  const isLoggedIn = Boolean(session?.user)
+  const nav = useMemo(
+    () =>
+      getVisibleNav({
+        isLoggedIn,
+        systemRole,
+        hasRefugio: Boolean(refugioId),
+      }),
+    [isLoggedIn, systemRole, refugioId],
+  )
 
   useEffect(() => {
     if (location.state?.forbidden) {
       void Swal.fire({
         icon: 'error',
         title: 'Acceso denegado',
-        text: 'No tienes permisos de administrador.',
+        text: 'No tienes permiso para acceder a esa sección.',
         confirmButtonColor: '#E07A5F',
       })
       window.history.replaceState({}, document.title)
@@ -45,12 +58,18 @@ export default function PublicApp() {
       void Swal.fire({
         icon: 'warning',
         title: 'Inicia sesión',
-        text: 'Debes iniciar sesión para acceder al panel de administración.',
+        text: 'Debes iniciar sesión para continuar.',
         confirmButtonColor: '#E07A5F',
       })
       window.history.replaceState({}, document.title)
     }
   }, [location.state])
+
+  useEffect(() => {
+    if (!isTabAllowed(activeTab, nav)) {
+      setActiveTab('explore')
+    }
+  }, [activeTab, nav])
 
   const refreshSession = useCallback(() => {
     if (!supabase) {
@@ -60,7 +79,8 @@ export default function PublicApp() {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
     })
-  }, [])
+    void refetchProfile()
+  }, [refetchProfile])
 
   useEffect(() => {
     if (!supabase) return undefined
@@ -79,18 +99,21 @@ export default function PublicApp() {
   }, [])
 
   const tabClass = (tab) =>
-    `px-4 py-2 rounded-lg text-sm font-medium transition ${
+    `px-4 py-2 rounded-lg text-sm font-medium transition font-body ${
       activeTab === tab
         ? 'bg-primary text-white'
         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
     }`
 
-  const showRefugeTab = Boolean(session?.user && refugioId && !isLoadingRefugio)
-  const showFavoritesTab = Boolean(session?.user)
-
   const handleAdoptionFromFavorites = (petId) => {
     setExploreFocusPetId(petId)
     setActiveTab('explore')
+  }
+
+  const handleSignOut = () => {
+    setSession(null)
+    setActiveTab('explore')
+    setRecentPet(null)
   }
 
   return (
@@ -105,7 +128,7 @@ export default function PublicApp() {
               <h1 className="font-heading text-xl md:text-2xl text-gray-900 leading-tight">
                 Adopción de Mascotas
               </h1>
-              <p className="text-xs md:text-sm text-gray-600 flex items-center gap-1">
+              <p className="text-xs md:text-sm text-gray-600 flex items-center gap-1 font-body">
                 <Heart className="w-3.5 h-3.5 text-secondary" aria-hidden />
                 Conecta refugios con adoptantes
               </p>
@@ -113,87 +136,106 @@ export default function PublicApp() {
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
-          <nav className="flex flex-wrap gap-2" aria-label="Secciones principales">
-            <button type="button" onClick={() => setActiveTab('explore')} className={tabClass('explore')}>
-              Explorar mascotas
-            </button>
-            {showFavoritesTab && (
-              <button
-                type="button"
-                onClick={() => setActiveTab('favorites')}
-                className={tabClass('favorites')}
-              >
-                <span className="inline-flex items-center gap-1.5">
-                  <Heart className="w-4 h-4" aria-hidden />
-                  Mis Favoritos
-                  {favoritesCount > 0 && (
-                    <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-white/20 text-xs font-semibold">
-                      {favoritesCount}
-                    </span>
-                  )}
-                </span>
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setActiveTab('my-applications')}
-              className={tabClass('my-applications')}
-            >
-              <span className="inline-flex items-center gap-1.5">
-                <ClipboardList className="w-4 h-4" aria-hidden />
-                Mis solicitudes
-              </span>
-            </button>
-            {showRefugeTab && (
-              <button
-                type="button"
-                onClick={() => setActiveTab('shelter-applications')}
-                className={tabClass('shelter-applications')}
-              >
-                <span className="inline-flex items-center gap-1.5">
+            <nav className="flex flex-wrap gap-2" aria-label="Secciones principales">
+              {nav.explore && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('explore')}
+                  className={tabClass('explore')}
+                >
+                  Explorar mascotas
+                </button>
+              )}
+              {nav.favorites && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('favorites')}
+                  className={tabClass('favorites')}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <Heart className="w-4 h-4" aria-hidden />
+                    Mis Favoritos
+                    {favoritesCount > 0 && (
+                      <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-white/20 text-xs font-semibold">
+                        {favoritesCount}
+                      </span>
+                    )}
+                  </span>
+                </button>
+              )}
+              {nav.myApplications && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('my-applications')}
+                  className={tabClass('my-applications')}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <ClipboardList className="w-4 h-4" aria-hidden />
+                    Mis adopciones
+                  </span>
+                </button>
+              )}
+              {nav.shelterDashboard && !isLoadingRefugio && (
+                <Link
+                  to="/shelter-dashboard"
+                  className="px-4 py-2 rounded-lg text-sm font-medium transition inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 font-body"
+                >
                   <Inbox className="w-4 h-4" aria-hidden />
-                  Solicitudes recibidas
+                  Panel refugio
                   {pendingCount > 0 && (
-                    <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-white/20 text-xs font-semibold">
+                    <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-primary text-white text-xs font-semibold">
                       {pendingCount}
                     </span>
                   )}
-                </span>
-              </button>
+                </Link>
+              )}
+              {nav.registerPet && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('register')}
+                  className={tabClass('register')}
+                >
+                  Registrar mascota
+                </button>
+              )}
+              {nav.admin && (
+                <Link
+                  to="/admin"
+                  onClick={() => void refetchProfile()}
+                  className="px-4 py-2 rounded-lg text-sm font-medium transition inline-flex items-center gap-1.5 bg-primary text-white hover:bg-primary/90 font-body"
+                >
+                  <Shield className="w-4 h-4" aria-hidden />
+                  Admin
+                </Link>
+              )}
+              {nav.profile && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('profile')}
+                  className={tabClass('profile')}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <User className="w-4 h-4" aria-hidden />
+                    Mi perfil
+                  </span>
+                </button>
+              )}
+            </nav>
+            {isLoggedIn && (
+              <NotificationDropdown
+                notifications={notifications.notifications}
+                unreadCount={notifications.unreadCount}
+                isLoading={notifications.isLoading}
+                markAsRead={notifications.markAsRead}
+                markAllAsRead={notifications.markAllAsRead}
+              />
             )}
-            <button type="button" onClick={() => setActiveTab('register')} className={tabClass('register')}>
-              Registrar mascota
-            </button>
-            {session?.user && (
-              <Link
-                to="/admin"
-                onClick={() => void refetchProfile()}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition inline-flex items-center gap-1.5 ${
-                  isAdmin
-                    ? 'bg-primary text-white hover:bg-primary/90'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                <Shield className="w-4 h-4" aria-hidden />
-                Admin
-              </Link>
-            )}
-          </nav>
-          {session?.user && (
-            <NotificationDropdown
-              notifications={notifications.notifications}
-              unreadCount={notifications.unreadCount}
-              isLoading={notifications.isLoading}
-              markAsRead={notifications.markAsRead}
-              markAllAsRead={notifications.markAllAsRead}
-            />
-          )}
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-        {activeTab === 'explore' && (
+        {activeTab === 'explore' && nav.explore && (
           <BrowsePetsPage
             session={session}
             onAuthChange={refreshSession}
@@ -204,53 +246,45 @@ export default function PublicApp() {
           />
         )}
 
-        {activeTab === 'favorites' && showFavoritesTab && (
+        {activeTab === 'favorites' && nav.favorites && (
           <FavoritesPage
-            userId={userId}
+            session={session}
             favorites={favorites}
             onExplore={() => setActiveTab('explore')}
             onRequestAdoption={handleAdoptionFromFavorites}
           />
         )}
 
-        {activeTab === 'my-applications' && (
-          <MyApplicationsPage
-            userId={userId}
-            onExplore={() => setActiveTab('explore')}
+        {activeTab === 'my-applications' && nav.myApplications && (
+          <MyApplicationsPage userId={userId} onExplore={() => setActiveTab('explore')} />
+        )}
+
+        {activeTab === 'profile' && nav.profile && session?.user && (
+          <ProfilePage
+            session={session}
+            profile={profile}
+            systemRole={systemRole}
+            isLoadingProfile={isLoadingProfile}
+            onSignOut={handleSignOut}
+            onGoToApplications={() => setActiveTab('my-applications')}
+            showShelterDashboard={nav.shelterDashboard}
+            pendingShelterApps={pendingCount}
           />
         )}
 
-        {activeTab === 'shelter-applications' && showRefugeTab && (
-          <ShelterApplicationsPage
-            refugioNombre={refugioNombre}
-            manage={manageApplications}
-            currentUserId={userId}
-          />
-        )}
-
-        {activeTab === 'register' && (
+        {activeTab === 'register' && nav.registerPet && (
           <>
-            <AuthPanel session={session} onAuthChange={refreshSession} />
-            {session?.user ? (
-              <>
-                <CreatePetPage onSuccess={(pet) => setRecentPet(pet)} />
-                {recentPet && (
-                  <aside className="max-w-2xl mx-auto bg-secondary/10 border border-secondary/30 rounded-xl p-4 text-sm text-gray-800">
-                    <p className="font-heading font-semibold text-secondary mb-1">
-                      Última mascota publicada
-                    </p>
-                    <p>
-                      <strong>{recentPet.nombre}</strong> — {recentPet.especie},{' '}
-                      {recentPet.raza}, {recentPet.edad}
-                    </p>
-                  </aside>
-                )}
-              </>
-            ) : (
-              <p className="text-center text-gray-600 text-sm py-8 max-w-2xl mx-auto">
-                Inicia sesión como refugio para registrar el perfil de una mascota en
-                adopción.
-              </p>
+            <CreatePetPage onSuccess={(pet) => setRecentPet(pet)} />
+            {recentPet && (
+              <aside className="max-w-2xl mx-auto bg-secondary/10 border border-secondary/30 rounded-xl p-4 text-sm text-gray-800 font-body">
+                <p className="font-heading font-semibold text-secondary mb-1">
+                  Última mascota publicada
+                </p>
+                <p>
+                  <strong>{recentPet.nombre}</strong> — {recentPet.especie}, {recentPet.raza},{' '}
+                  {recentPet.edad}
+                </p>
+              </aside>
             )}
           </>
         )}
@@ -258,4 +292,3 @@ export default function PublicApp() {
     </div>
   )
 }
-
