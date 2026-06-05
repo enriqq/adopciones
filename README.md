@@ -9,6 +9,12 @@ React + Vite + Tailwind CSS + Supabase (FEAT-001–004 archivados, FEAT-005 en c
 
 ## Instalación
 
+**PROYECTO LISTO PARA CORRER CON** 
+```bash 
+npm run dev
+```
+**EN CASO DE COMENZAR DE CERO, SEGUIR LOS SIGUIENTES PASOS**
+
 ```bash
 npm install
 cp .env.example .env.local
