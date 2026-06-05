@@ -6,8 +6,15 @@ import ShelterDashboardPage from '../pages/ShelterDashboardPage.jsx'
 import { useProfile } from '../hooks/useProfile.js'
 
 function ShelterDashboardRoute() {
-  const { session } = useProfile(null)
-  return <ShelterDashboardPage currentUserId={session?.user?.id ?? null} />
+  const { session, systemRole, isLoading } = useProfile(null)
+
+  return (
+    <ShelterDashboardPage
+      currentUserId={session?.user?.id ?? null}
+      systemRole={systemRole}
+      isLoadingProfile={isLoading}
+    />
+  )
 }
 
 export default function AppRoutes() {

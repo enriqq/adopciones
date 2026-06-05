@@ -17,7 +17,7 @@ export function getVisibleNav(ctx) {
     profile: isLoggedIn,
     registerPet: isLoggedIn && (role === 'shelter' || role === 'admin') && hasRefugio,
     shelterDashboard:
-      isLoggedIn && (role === 'shelter' || role === 'admin') && hasRefugio,
+      isLoggedIn && (role === 'shelter' || role === 'admin'),
     admin: isLoggedIn && role === 'admin',
   }
 }

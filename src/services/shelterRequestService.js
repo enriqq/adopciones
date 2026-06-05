@@ -1,6 +1,9 @@
 import { supabase } from '../lib/supabase.js'
 import { mapSupabaseError } from './petService.js'
 
+const SHELTER_REQUEST_SELECT_FIELDS =
+  'id, user_id, nombre_refugio, direccion, telefono, status, created_at, reviewed_at, reviewed_by'
+
 export function mapShelterRequestError(error) {
   if (!error) return 'Ocurrió un error inesperado.'
   const code = error.code ?? ''
@@ -11,6 +14,9 @@ export function mapShelterRequestError(error) {
   }
   if (code === '42501' || msg.includes('row-level security')) {
     return 'No tienes permiso para enviar esta solicitud. Si ya tenías un refugio de prueba, aplica la migración 033 en Supabase o contacta al administrador.'
+  }
+  if (msg.includes('Solo administradores')) {
+    return 'No tienes permiso para gestionar solicitudes de refugio.'
   }
   if (msg.includes('Ya tienes una solicitud pendiente')) {
     return 'Ya tienes una solicitud de refugio pendiente.'
@@ -34,6 +40,7 @@ export function normalizeShelterRequestRow(row) {
     status: row.status,
     created_at: row.created_at,
     reviewed_at: row.reviewed_at ?? null,
+    reviewed_by: row.reviewed_by ?? null,
   }
 }
 
@@ -45,8 +52,26 @@ export async function fetchMyShelterRequests(userId) {
 
   const { data, error } = await supabase
     .from('shelter_requests')
-    .select('id, user_id, nombre_refugio, direccion, telefono, status, created_at, reviewed_at')
+    .select(SHELTER_REQUEST_SELECT_FIELDS)
     .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return (data ?? []).map(normalizeShelterRequestRow)
+}
+
+export async function fetchAllShelterRequests() {
+  if (!supabase) return []
+
+  const { data: rpcData, error: rpcError } = await supabase.rpc('list_shelter_requests')
+
+  if (!rpcError && Array.isArray(rpcData)) {
+    return rpcData.map(normalizeShelterRequestRow)
+  }
+
+  const { data, error } = await supabase
+    .from('shelter_requests')
+    .select(SHELTER_REQUEST_SELECT_FIELDS)
     .order('created_at', { ascending: false })
 
   if (error) throw error
@@ -104,4 +129,36 @@ export async function submitShelterRequest(input) {
     throw rpcError
   }
   return normalizeShelterRequestRow(data)
+}
+
+/**
+ * @param {string} requestId
+ */
+export async function approveShelterRequest(requestId) {
+  if (!supabase) {
+    throw new Error('Supabase no está configurado.')
+  }
+
+  const { data, error } = await supabase.rpc('approve_shelter_request', {
+    p_request_id: requestId,
+  })
+
+  if (error) throw error
+  return data ?? null
+}
+
+/**
+ * @param {string} requestId
+ */
+export async function rejectShelterRequest(requestId) {
+  if (!supabase) {
+    throw new Error('Supabase no está configurado.')
+  }
+
+  const { data, error } = await supabase.rpc('reject_shelter_request', {
+    p_request_id: requestId,
+  })
+
+  if (error) throw error
+  return data ?? null
 }

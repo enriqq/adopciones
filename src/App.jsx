@@ -175,7 +175,7 @@ export default function PublicApp() {
                   </span>
                 </button>
               )}
-              {nav.shelterDashboard && !isLoadingRefugio && (
+              {nav.shelterDashboard && (systemRole === 'admin' || !isLoadingRefugio) && (
                 <Link
                   to="/shelter-dashboard"
                   className="px-4 py-2 rounded-lg text-sm font-medium transition inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 font-body"
